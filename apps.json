@@ -1,0 +1,19 @@
+[
+  {
+    "name": "Poke|Watch",
+    "url": "https://plasma19911.github.io/pokewatch/",
+    "eyebrow": "News & Releases",
+    "what": "Was kommt, was erschienen ist, was sich lohnt.",
+    "stat": "Neuigkeiten rund um Pokémon TCG",
+    "accent": "#6ea8ff"
+  },
+  {
+    "name": "PKM |Scanner",
+    "url": "https://plasma19911.github.io/pkm-scanner/",
+    "eyebrow": "Angebote & Preise",
+    "what": "Alle Shops nebeneinander, günstigster Preis oben.",
+    "stat": "Preisvergleich in deutschen Shops",
+    "accent": "#ffcb05",
+    "data": "https://plasma19911.github.io/pkm-scanner/data.json"
+  }
+]

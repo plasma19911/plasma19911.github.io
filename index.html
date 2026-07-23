@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0d0e1c">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Poké Hub">
+<meta name="description" content="Startseite für PokeWatch und den PKM Scanner">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<title>Poké Hub</title>
+<style>
+:root{
+  --ink:#0d0e1c;
+  --surface:#171932;
+  --line:rgba(255,255,255,.09);
+  --text:#f0f1ff;
+  --muted:#8b91bd;
+  --news:#6ea8ff;
+  --deals:#ffcb05;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{height:100%}
+body{
+  margin:0;min-height:100%;background:var(--ink);color:var(--text);
+  font-family:var(--sans);font-size:15px;line-height:1.4;
+  display:flex;flex-direction:column;
+  padding:calc(env(safe-area-inset-top) + 26px) 18px calc(env(safe-area-inset-bottom) + 20px);
+}
+a{color:inherit;text-decoration:none}
+
+/* ---------- Kopf ---------- */
+.head{display:flex;align-items:center;gap:10px;margin-bottom:5px}
+.mark{width:26px;height:26px;flex:0 0 auto}
+.wordmark{font-size:13px;font-weight:800;letter-spacing:.2em;text-transform:uppercase}
+.wordmark span{color:var(--deals)}
+.today{
+  margin:0 0 22px 36px;font-size:12px;color:var(--muted);
+  letter-spacing:.02em;
+}
+
+/* ---------- Kacheln ---------- */
+.tiles{flex:1;display:flex;flex-direction:column;gap:14px;min-height:0}
+.tile{
+  --accent:var(--deals);
+  position:relative;flex:1 1 0;min-height:150px;overflow:hidden;
+  border:1px solid var(--line);border-radius:20px;
+  background:
+    radial-gradient(120% 90% at 82% 0%, color-mix(in srgb, var(--accent) 20%, transparent), transparent 62%),
+    var(--surface);
+  display:flex;flex-direction:column;justify-content:space-between;
+  padding:18px 18px 16px;
+  transition:transform .16s ease, border-color .16s ease;
+}
+.tile:active{transform:scale(.985);border-color:color-mix(in srgb, var(--accent) 55%, transparent)}
+.tile.news{--accent:var(--news)}
+
+.eyebrow{
+  font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--accent);display:flex;align-items:center;gap:8px;
+}
+.eyebrow::before{content:"";width:16px;height:2px;background:var(--accent);border-radius:2px}
+.name{
+  margin:9px 0 0;font-size:29px;font-weight:800;letter-spacing:-.02em;line-height:1.05;
+}
+.name em{font-style:normal;color:var(--accent)}
+.what{margin:7px 0 0;font-size:13px;color:var(--muted);max-width:26ch}
+
+.foot{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-top:16px}
+.stat{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;min-height:1.4em}
+.stat b{color:var(--text);font-weight:600}
+.go{
+  width:38px;height:38px;flex:0 0 auto;border-radius:50%;
+  border:1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  display:grid;place-items:center;color:var(--accent);
+}
+
+/* Folie: ein einmaliger Lichtstreifen beim Öffnen, versetzt je Kachel */
+.sheen{
+  position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(105deg, transparent 38%,
+    color-mix(in srgb, var(--accent) 22%, transparent) 50%, transparent 62%);
+  transform:translateX(-120%);
+  animation:sweep 1.5s cubic-bezier(.3,.7,.3,1) forwards;
+}
+.tile:nth-child(2) .sheen{animation-delay:.22s}
+@keyframes sweep{to{transform:translateX(120%)}}
+
+.note{
+  margin:18px 0 0;text-align:center;font-size:11.5px;color:var(--muted);
+}
+.note b{color:var(--text);font-weight:600}
+
+@media (min-height:760px){ .name{font-size:33px} .tile{padding:22px} }
+@media (prefers-reduced-motion:reduce){ .sheen{display:none} .tile{transition:none} }
+:focus-visible{outline:2px solid var(--deals);outline-offset:3px}
+</style>
+</head>
+<body>
+
+<div class="head">
+  <svg class="mark" viewBox="0 0 40 40" aria-hidden="true">
+    <circle cx="20" cy="20" r="18" fill="#6ea8ff"/>
+    <path d="M2 20a18 18 0 0 0 36 0z" fill="#ffcb05"/>
+    <rect x="2" y="17.6" width="36" height="4.8" fill="#0d0e1c"/>
+    <circle cx="20" cy="20" r="6.4" fill="#0d0e1c"/>
+    <circle cx="20" cy="20" r="3.5" fill="#f0f1ff"/>
+  </svg>
+  <div class="wordmark">Poké <span>Hub</span></div>
+</div>
+<p class="today" id="today"></p>
+
+<div class="tiles" id="tiles"></div>
+
+<p class="note" id="note"></p>
+
+<script>
+"use strict";
+
+/* Datum im Kopf */
+var d = new Date();
+document.getElementById('today').textContent =
+  d.toLocaleDateString('de-DE', { weekday:'long', day:'numeric', month:'long' });
+
+/* Welche Kacheln erscheinen, steht in apps.json - eine neue App kommt
+   dazu, indem dort ein Eintrag ergänzt wird. Kein HTML anfassen. */
+var FALLBACK = [
+  { name:"Poke|Watch", url:"/pokewatch/", eyebrow:"News & Releases",
+    what:"Was kommt, was erschienen ist, was sich lohnt.",
+    stat:"Neuigkeiten rund um Pokémon TCG", accent:"#6ea8ff" },
+  { name:"PKM |Scanner", url:"/pkm-scanner/", eyebrow:"Angebote & Preise",
+    what:"Alle Shops nebeneinander, günstigster Preis oben.",
+    stat:"Preisvergleich in deutschen Shops", accent:"#ffcb05",
+    data:"/pkm-scanner/data.json" }
+];
+
+var ARROW = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" ' +
+  'stroke="currentColor" stroke-width="2.3" stroke-linecap="round" ' +
+  'stroke-linejoin="round"><path d="M5 12h13"/><path d="M12 5l7 7-7 7"/></svg>';
+
+function esc(t){ return String(t == null ? '' : t).replace(/[&<>"']/g, function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+
+/* Im Namen trennt ein | den hellen vom farbigen Teil: "PKM |Scanner" */
+function nameHTML(name){
+  var i = String(name).indexOf('|');
+  if (i === -1) return esc(name);
+  return esc(name.slice(0, i)) + '<em>' + esc(name.slice(i + 1)) + '</em>';
+}
+
+function tileHTML(app, i){
+  return '<a class="tile" href="' + esc(app.url) + '" style="--accent:' +
+      esc(app.accent || '#ffcb05') + '">' +
+    '<span class="sheen" style="animation-delay:' + (i * 0.22).toFixed(2) + 's"></span>' +
+    '<div>' +
+      '<div class="eyebrow">' + esc(app.eyebrow || '') + '</div>' +
+      '<h1 class="name">' + nameHTML(app.name) + '</h1>' +
+      (app.what ? '<p class="what">' + esc(app.what) + '</p>' : '') +
+    '</div>' +
+    '<div class="foot">' +
+      '<div class="stat" data-i="' + i + '">' + esc(app.stat || '') + '</div>' +
+      '<div class="go" aria-hidden="true">' + ARROW + '</div>' +
+    '</div>' +
+  '</a>';
+}
+
+/* Kacheln, die auf eine data.json des Scanners zeigen, bekommen ihre
+   Zahlen live von dort. */
+function fillStats(app, i){
+  if (!app.data) return;
+  fetch(app.data + '?t=' + Date.now(), { cache:'no-store' })
+    .then(function(r){ if (!r.ok) throw 0; return r.json(); })
+    .then(function(d){
+      var o = (d.offers || []).length, p = (d.preorders || []).length;
+      var parts = ['<b>' + o + '</b> Angebote', '<b>' + p + '</b> Vorbestellungen'];
+      if (d.product_count) parts.push('<b>' + d.product_count + '</b> Produkte');
+      var el = document.querySelector('.stat[data-i="' + i + '"]');
+      if (el) el.innerHTML = parts.join(' · ');
+      if (d.scan_time){
+        document.getElementById('note').innerHTML =
+          'Zuletzt gescannt am <b>' + esc(d.scan_time) + '</b>';
+      }
+    })
+    .catch(function(){ /* Kachel behält ihren normalen Untertitel */ });
+}
+
+function build(apps){
+  document.getElementById('tiles').innerHTML =
+    apps.map(function(a, i){ return tileHTML(a, i); }).join('');
+  apps.forEach(fillStats);
+}
+
+fetch('./apps.json?t=' + Date.now(), { cache:'no-store' })
+  .then(function(r){ if (!r.ok) throw 0; return r.json(); })
+  .then(function(apps){ build(apps && apps.length ? apps : FALLBACK); })
+  .catch(function(){ build(FALLBACK); });
+
+if ('serviceWorker' in navigator){
+  navigator.serviceWorker.register('/sw.js').catch(function(){});
+}
+</script>
+</body>
+</html>
